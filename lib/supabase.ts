@@ -5,7 +5,25 @@ import { shrink } from './image';
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 export const cloudEnabled = !!(url && anon);
-export const sb = cloudEnabled ? createClient(url!, anon!) : (null as never);
+
+// Remember the signed-in user's token ourselves and attach it to every request.
+// (On some browsers the default client was sending the anonymous key instead, so saves hit row-level security.)
+let token: string | null = null;
+export const sb = cloudEnabled
+  ? createClient(url!, anon!, {
+      global: {
+        fetch: (input, init) => {
+          const h = new Headers(init?.headers);
+          if (token && (h.get('Authorization') || '').startsWith('Bearer sb_')) h.set('Authorization', `Bearer ${token}`);
+          return fetch(input, { ...init, headers: h });
+        }
+      }
+    })
+  : (null as never);
+if (cloudEnabled && typeof window !== 'undefined') {
+  sb.auth.onAuthStateChange((_e: string, s: { access_token?: string } | null) => { token = s?.access_token ?? null; });
+  sb.auth.getSession().then(({ data }: { data: { session: { access_token: string } | null } }) => { if (data.session) token = data.session.access_token; });
+}
 
 export const cloudStore: Store = {
   async loadEntries() {

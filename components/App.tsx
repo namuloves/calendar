@@ -8,6 +8,7 @@ import Sheet from './Sheet';
 import Picker from './Picker';
 import Viewer from './Viewer';
 import Login from './Login';
+import PasswordDialog from './PasswordDialog';
 
 const SPAN = 12; // months before/after the current month
 
@@ -33,6 +34,7 @@ function Calendar({ store }: { store: Store }) {
   const [quick, setQuick] = useState('');
   const [year, setYear] = useState(new Date().getFullYear());
   const [toast, setToast] = useState('');
+  const [pwOpen, setPwOpen] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const photoTarget = useRef(todayKey());
@@ -117,7 +119,8 @@ function Calendar({ store }: { store: Store }) {
       <div className="top">
         <h1>{year}</h1>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          {cloudEnabled && <button className="link" style={{ color: 'var(--muted)', fontSize: 13 }} onClick={() => sb.auth.signOut()}>Sign out</button>}
+          {cloudEnabled && <button className="link" style={{ color: 'var(--muted)', fontSize: 13, padding: '0 8px' }} onClick={() => setPwOpen(true)}>Password</button>}
+          {cloudEnabled && <button className="link" style={{ color: 'var(--muted)', fontSize: 13, padding: '0 8px' }} onClick={() => sb.auth.signOut()}>Sign out</button>}
           <button className="link" onClick={() => toToday(true)}>Today</button>
         </div>
       </div>
@@ -180,6 +183,7 @@ function Calendar({ store }: { store: Store }) {
           onPick={(e) => { patch(picker, { emoji: e }); setPicker(null); }} />
       )}
       {viewer && viewerPhotos.length > 0 && <Viewer photos={viewerPhotos} start={viewer.i} onDelete={delPhoto} onClose={() => setViewer(null)} />}
+      {pwOpen && <PasswordDialog onClose={() => setPwOpen(false)} />}
       {toast && <div className="toast" role="status">{toast}</div>}
     </div>
   );

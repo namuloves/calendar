@@ -57,7 +57,7 @@ input,textarea{font:inherit}
 .chip{flex:none;height:34px;padding:0 14px;border-radius:17px;border:0;background:#ECEFEA;font-size:14px;font-weight:500;color:var(--muted)}
 .chip.on{background:var(--ink);color:#fff}
 .grid{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(7,1fr);gap:2px;align-content:start;margin:10px -8px 0;padding:0 8px calc(16px + env(safe-area-inset-bottom))}
-.grid button{aspect-ratio:1;border:2px solid transparent;border-radius:12px;background:none;font-size:28px;padding:0}
+.grid button{content-visibility:auto;contain-intrinsic-size:48px;aspect-ratio:1;border:2px solid transparent;border-radius:12px;background:none;font-size:28px;padding:0}
 .grid button.on{background:#E8EAFB;border-color:var(--accent)}
 .psearch{flex:none;height:40px;margin-top:6px;border:1px solid var(--hair);border-radius:12px;padding:0 12px;font-size:16px;background:#fff;outline:0;color:var(--ink)}
 .viewer{position:absolute;inset:0;z-index:60;background:#101213;color:#fff;display:flex;flex-direction:column}

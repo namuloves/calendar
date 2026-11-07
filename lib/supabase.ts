@@ -6,24 +6,10 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 export const cloudEnabled = !!(url && anon);
 
-// Remember the signed-in user's token ourselves and attach it to every request.
-// (On some browsers the default client was sending the anonymous key instead, so saves hit row-level security.)
-let token: string | null = null;
+// No login: the app talks to Supabase as the anonymous role (see the open-access migration).
 export const sb = cloudEnabled
-  ? createClient(url!, anon!, {
-      global: {
-        fetch: (input, init) => {
-          const h = new Headers(init?.headers);
-          if (token && (h.get('Authorization') || '').startsWith('Bearer sb_')) h.set('Authorization', `Bearer ${token}`);
-          return fetch(input, { ...init, headers: h });
-        }
-      }
-    })
+  ? createClient(url!, anon!, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } })
   : (null as never);
-if (cloudEnabled && typeof window !== 'undefined') {
-  sb.auth.onAuthStateChange((_e: string, s: { access_token?: string } | null) => { token = s?.access_token ?? null; });
-  sb.auth.getSession().then(({ data }: { data: { session: { access_token: string } | null } }) => { if (data.session) token = data.session.access_token; });
-}
 
 export const cloudStore: Store = {
   async loadEntries() {
@@ -52,10 +38,8 @@ export const cloudStore: Store = {
     return rows.map((r) => ({ id: r.id, day: r.day, path: r.path, created: Date.parse(r.created_at), url: map.get(r.path) || '' }));
   },
   async addPhoto(day, file) {
-    const { data: u } = await sb.auth.getUser();
-    const uid = u.user!.id;
     const blob = await shrink(file);
-    const path = `${uid}/${day}/${crypto.randomUUID()}.jpg`;
+    const path = `open/${day}/${crypto.randomUUID()}.jpg`;
     const up = await sb.storage.from('photos').upload(path, blob, { contentType: 'image/jpeg' });
     if (up.error) throw up.error;
     const { data, error } = await sb.from('photos').insert({ day, path }).select('id,created_at').single();

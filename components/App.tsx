@@ -3,25 +3,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Entry, Photo, Store } from '@/lib/types';
 import { MONTHS, dayPillar, key, todayKey } from '@/lib/dates';
 import { localStore } from '@/lib/localStore';
-import { cloudEnabled, cloudStore, sb } from '@/lib/supabase';
+import { cloudEnabled, cloudStore } from '@/lib/supabase';
 import Sheet from './Sheet';
 import Picker from './Picker';
 import Viewer from './Viewer';
-import Login from './Login';
-import PasswordDialog from './PasswordDialog';
 
 const SPAN = 12; // months before/after the current month
 
 export default function App() {
-  const [session, setSession] = useState<'loading' | 'in' | 'out'>(cloudEnabled ? 'loading' : 'in');
-  useEffect(() => {
-    if (!cloudEnabled) return;
-    sb.auth.getSession().then(({ data }: any) => setSession(data.session ? 'in' : 'out'));
-    const { data } = sb.auth.onAuthStateChange((_e: any, s: any) => setSession(s ? 'in' : 'out'));
-    return () => data.subscription.unsubscribe();
-  }, []);
-  if (session === 'loading') return null;
-  if (session === 'out') return <Login />;
   return <Calendar store={cloudEnabled ? cloudStore : localStore} />;
 }
 
@@ -34,7 +23,6 @@ function Calendar({ store }: { store: Store }) {
   const [quick, setQuick] = useState('');
   const [year, setYear] = useState(new Date().getFullYear());
   const [toast, setToast] = useState('');
-  const [pwOpen, setPwOpen] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const photoTarget = useRef(todayKey());
@@ -119,8 +107,6 @@ function Calendar({ store }: { store: Store }) {
       <div className="top">
         <h1>{year}</h1>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          {cloudEnabled && <button className="link" style={{ color: 'var(--muted)', fontSize: 13, padding: '0 8px' }} onClick={() => setPwOpen(true)}>Password</button>}
-          {cloudEnabled && <button className="link" style={{ color: 'var(--muted)', fontSize: 13, padding: '0 8px' }} onClick={() => sb.auth.signOut()}>Sign out</button>}
           <button className="link" onClick={() => toToday(true)}>Today</button>
         </div>
       </div>
@@ -183,7 +169,6 @@ function Calendar({ store }: { store: Store }) {
           onPick={(e) => { patch(picker, { emoji: e }); setPicker(null); }} />
       )}
       {viewer && viewerPhotos.length > 0 && <Viewer photos={viewerPhotos} start={viewer.i} onDelete={delPhoto} onClose={() => setViewer(null)} />}
-      {pwOpen && <PasswordDialog onClose={() => setPwOpen(false)} />}
       {toast && <div className="toast" role="status">{toast}</div>}
     </div>
   );
